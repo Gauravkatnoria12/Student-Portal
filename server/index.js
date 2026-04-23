@@ -113,6 +113,47 @@ app.post('/api/students', (req, res) => {
     });
 });
 
+// Update Student (Admin)
+app.put('/api/students/:rollNo', (req, res) => {
+    const { rollNo } = req.params;
+    const updates = req.body;
+    
+    // Build dynamic update query
+    const fields = Object.keys(updates).filter(key => key !== 'roll_no');
+    const setClause = fields.map(field => `${field} = ?`).join(', ');
+    const values = fields.map(field => updates[field]);
+    values.push(rollNo); // Add roll_no for WHERE clause
+    
+    const query = `UPDATE students SET ${setClause} WHERE roll_no = ?`;
+    
+    db.run(query, values, function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        if (this.changes === 0) return res.status(404).json({ error: 'Student not found' });
+        res.json({ message: "Student updated successfully" });
+    });
+});
+
+// Delete Student (Admin)
+app.delete('/api/students/:rollNo', (req, res) => {
+    const { rollNo } = req.params;
+    
+    db.serialize(() => {
+        // Delete from related tables first due to foreign keys
+        db.run(`DELETE FROM fees WHERE roll_no = ?`, [rollNo]);
+        db.run(`DELETE FROM attendance WHERE roll_no = ?`, [rollNo]);
+        db.run(`DELETE FROM users WHERE username = ?`, [rollNo], function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            
+            // Finally delete the student
+            db.run(`DELETE FROM students WHERE roll_no = ?`, [rollNo], function(err) {
+                if (err) return res.status(500).json({ error: err.message });
+                if (this.changes === 0) return res.status(404).json({ error: 'Student not found' });
+                res.json({ message: "Student deleted successfully" });
+            });
+        });
+    });
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

@@ -4,7 +4,7 @@ import axios from 'axios';
 import { 
   LayoutDashboard, Users, User, LogOut, Search, 
   TrendingUp, Calendar, CreditCard, ChevronRight,
-  Menu, X, Lock, Fingerprint, Plus
+  Menu, X, Lock, Fingerprint, Plus, Edit, Trash2
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -358,10 +358,101 @@ const AddStudentModal = ({ isOpen, onClose, onRefresh }) => {
   );
 };
 
+const EditStudentModal = ({ isOpen, onClose, onRefresh, student }) => {
+  const [formData, setFormData] = useState({
+    roll_no: '', name: '', father_name: '', mother_name: '',
+    mobile: '', reg_no: '', dob: '', gender: 'Male',
+    category: 'GEN', religion: 'Hindu'
+  });
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (student) {
+      setFormData({
+        roll_no: student.roll_no || '',
+        name: student.name || '',
+        father_name: student.father_name || '',
+        mother_name: student.mother_name || '',
+        mobile: student.mobile || '',
+        reg_no: student.reg_no || '',
+        dob: student.dob || '',
+        gender: student.gender || 'Male',
+        category: student.category || 'GEN',
+        religion: student.religion || 'Hindu'
+      });
+    }
+  }, [student]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await axios.put(`${API_BASE}/students/${student.roll_no}`, formData);
+      onRefresh();
+      onClose();
+    } catch (err) {
+      alert(err.response?.data?.error || "Error updating student");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen || !student) return null;
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+        <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-[#4ade80] text-white">
+          <h3 className="text-xl font-black uppercase tracking-widest">Edit Student Details</h3>
+          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X/></button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto">
+          {Object.keys(formData).map((key) => (
+            <div key={key}>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">
+                {key.replace('_', ' ')}
+              </label>
+              {key === 'gender' ? (
+                <select 
+                  className="w-full bg-slate-50 border-none rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-[#4ade80] outline-none"
+                  value={formData[key]}
+                  onChange={(e) => setFormData({...formData, [key]: e.target.value})}
+                >
+                  <option>Male</option><option>Female</option><option>Other</option>
+                </select>
+              ) : (
+                <input
+                  type={key === 'dob' ? 'date' : 'text'}
+                  placeholder={`Enter ${key.replace('_', ' ')}`}
+                  className="w-full bg-slate-50 border-none rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-[#4ade80] outline-none"
+                  value={formData[key]}
+                  onChange={(e) => setFormData({...formData, [key]: e.target.value})}
+                  required
+                />
+              )}
+            </div>
+          ))}
+          <div className="md:col-span-2 pt-6">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#4ade80] text-white font-black py-4 rounded-2xl shadow-lg hover:shadow-[#4ade80]/20 transition-all uppercase tracking-widest disabled:opacity-50"
+            >
+              {loading ? 'Updating...' : 'Update Student'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const StudentList = () => {
   const [students, setStudents] = useState([]);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState(null);
 
   const fetchStudents = () => {
     axios.get(`${API_BASE}/students`).then(res => setStudents(res.data));
@@ -370,6 +461,22 @@ const StudentList = () => {
   useEffect(() => {
     fetchStudents();
   }, []);
+
+  const handleEdit = (student) => {
+    setSelectedStudent(student);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = async (rollNo) => {
+    if (window.confirm(`Are you sure you want to delete student ${rollNo}? This action cannot be undone.`)) {
+      try {
+        await axios.delete(`${API_BASE}/students/${rollNo}`);
+        fetchStudents();
+      } catch (err) {
+        alert(err.response?.data?.error || "Error deleting student");
+      }
+    }
+  };
 
   const filtered = students.filter(s => 
     s.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -406,6 +513,7 @@ const StudentList = () => {
           </div>
         </div>
         <AddStudentModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onRefresh={fetchStudents} />
+        <EditStudentModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} onRefresh={fetchStudents} student={selectedStudent} />
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-slate-50/50 text-slate-400 text-[10px] uppercase font-black tracking-[0.2em]">
@@ -413,7 +521,7 @@ const StudentList = () => {
                 <th className="px-8 py-5">Roll No</th>
                 <th className="px-8 py-5">Student Identity</th>
                 <th className="px-8 py-5">Attendance Record</th>
-                <th className="px-8 py-5 text-right">Profile</th>
+                <th className="px-8 py-5 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -437,10 +545,24 @@ const StudentList = () => {
                       <span className="text-[11px] font-black text-slate-900">{Math.round(s.percentage)}%</span>
                     </div>
                   </td>
-                  <td className="px-8 py-6 text-right">
-                    <Link to={`/admin/students/${s.roll_no.replace(/\//g, '-')}`} className="inline-flex items-center gap-2 text-[#6a42c2] bg-[#6a42c2]/5 hover:bg-[#6a42c2] hover:text-white px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
-                      Details <ChevronRight size={14} />
-                    </Link>
+                  <td className="px-8 py-6 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <button 
+                        onClick={() => handleEdit(s)}
+                        className="inline-flex items-center gap-1 text-[#4ade80] bg-[#4ade80]/5 hover:bg-[#4ade80] hover:text-white px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
+                      >
+                        <Edit size={12} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(s.roll_no)}
+                        className="inline-flex items-center gap-1 text-red-500 bg-red-500/5 hover:bg-red-500 hover:text-white px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                      <Link to={`/admin/students/${s.roll_no.replace(/\//g, '-')}`} className="inline-flex items-center gap-1 text-[#6a42c2] bg-[#6a42c2]/5 hover:bg-[#6a42c2] hover:text-white px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">
+                        <ChevronRight size={12} />
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}
