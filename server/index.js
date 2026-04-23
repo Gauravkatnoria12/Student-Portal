@@ -1,9 +1,22 @@
 const express = require('express');
 const cors = require('cors');
 const { db } = require('./database');
+require('dotenv').config();
 
 const app = express();
-app.use(cors());
+
+// Allow requests from both local and deployed frontend
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:5000',
+  process.env.FRONTEND_URL // Will be set during deployment
+].filter(Boolean);
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
 app.use(express.json());
 
 // Login API
