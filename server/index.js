@@ -3,6 +3,9 @@ const cors = require('cors');
 const { User, Student, Attendance, Fees, initDb } = require('./database');
 require('dotenv').config();
 
+// Initialize database connection
+initDb();
+
 const app = express();
 
 // Allow requests from both local and deployed frontend
@@ -172,12 +175,4 @@ app.delete('/api/students/:rollNo', async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 5000;
-
-initDb().then(() => {
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-    });
-}).catch(err => {
-    console.error('Failed to initialize database:', err);
-});
+module.exports = app;

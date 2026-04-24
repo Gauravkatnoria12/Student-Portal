@@ -43,20 +43,19 @@ const Student = mongoose.model('Student', studentSchema);
 const Attendance = mongoose.model('Attendance', attendanceSchema);
 const Fees = mongoose.model('Fees', feesSchema);
 
-const initDb = async () => {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/student-portal');
-    console.log('Connected to MongoDB');
+const initDb = () => {
+  mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/student-portal')
+    .then(() => console.log('Connected to MongoDB'))
+    .catch(err => console.error('Database connection error:', err));
 
-    // Insert default admin user if not exists
-    const adminExists = await User.findOne({ username: 'admin2024' });
-    if (!adminExists) {
-      await User.create({ username: 'admin2024', password: 'admin2024', role: 'admin' });
-      console.log('Admin user created');
+  // Insert default admin user if not exists
+  User.findOne({ username: 'admin2024' }).then(admin => {
+    if (!admin) {
+      User.create({ username: 'admin2024', password: 'admin2024', role: 'admin' })
+        .then(() => console.log('Admin user created'))
+        .catch(err => console.error('Error creating admin:', err));
     }
-  } catch (err) {
-    console.error('Database connection error:', err);
-  }
+  });
 };
 
 module.exports = { User, Student, Attendance, Fees, initDb };
