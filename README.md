@@ -48,3 +48,4 @@ Once both the backend and frontend are running, open your browser and navigate t
 - **Backend:** Node.js, Express
 - **Database:** SQLite
 - **Data Import:** XLSX Parser (Initial data seeded from `complete batch 2024 3rd sem.xls`)
+

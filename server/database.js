@@ -52,7 +52,14 @@ const initDb = () => {
                 FOREIGN KEY(roll_no) REFERENCES students(roll_no)
             )`, (err) => {
                 if (err) reject(err);
-                else resolve();
+                else {
+                    // Insert default admin user
+                    db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)`, 
+                        ['admin2024', 'admin2024', 'admin'], (insertErr) => {
+                        if (insertErr) console.error('Error inserting admin user:', insertErr);
+                        resolve();
+                    });
+                }
             });
         });
     });
