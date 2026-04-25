@@ -3,8 +3,6 @@ npm-debug.log
 .env
 .env.local
 *.sqlite
-*.xls
-*.xlsx
 seed.js
 inspect_excel.js
 .gitignore
