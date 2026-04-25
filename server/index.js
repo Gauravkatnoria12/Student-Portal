@@ -6,15 +6,8 @@ require('dotenv').config();
 const app = express();
 
 // Allow any localhost port (dev) or the deployed FRONTEND_URL (prod)
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // Postman / curl
-    if (/^http:\/\/localhost(:\d+)?$/.test(origin)) return callback(null, true);
-    if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return callback(null, true);
-    callback(new Error('CORS not allowed: ' + origin));
-  },
-  credentials: true
-}));
+// Allow ALL for setup (will restrict later)
+app.use(cors());
 app.use(express.json());
 
 // Health check
