@@ -10,58 +10,68 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Health check
-app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+// --- Excel Upload Setup ---
+const multer = require('multer');
+const xlsx = require('xlsx');
+const upload = multer({ dest: 'uploads/' });
 
-// Emergency Admin Setup
-app.get('/api/setup-admin', async (req, res) => {
-  try {
-    const { User } = require('./database');
-    await User.deleteOne({ username: 'admin2024' });
-    await User.create({ username: 'admin2024', password: 'admin2024', role: 'admin' });
-    res.json({ message: 'Admin account READY! Login with admin2024 / admin2024' });
-  } catch (err) {
-    console.error('Setup Error:', err);
-    res.status(500).json({ error: err.message });
-  }
+// Simple Setup UI
+app.get('/setup-portal', (req, res) => {
+  res.send(`
+    <body style="font-family:sans-serif; padding:50px; background:#f0f2f5;">
+      <div style="max-width:500px; margin:auto; background:white; padding:30px; border-radius:20px; shadow:0 10px 20px rgba(0,0,0,0.1)">
+        <h2>🚀 Student Portal Setup</h2>
+        <p>Select your Excel file to import all data:</p>
+        <form action="/api/upload-excel" method="post" enctype="multipart/form-data">
+          <input type="file" name="excelFile" accept=".xls,.xlsx" required style="margin-bottom:20px">
+          <br>
+          <button type="submit" style="background:#6a42c2; color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer">Upload & Import</button>
+        </form>
+      </div>
+    </body>
+  `);
 });
 
-// Migration from SQLite (One-time use)
-app.get('/api/migrate-data', async (req, res) => {
+app.post('/api/upload-excel', upload.single('excelFile'), async (req, res) => {
   try {
-    const Database = require('better-sqlite3');
-    const path = require('path');
-    const sqlitePath = path.join(__dirname, 'database.sqlite');
-    const db = new Database(sqlitePath);
-
-    console.log('📖 Starting Migration on Render...');
-    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
-    console.log('Detected Tables:', JSON.stringify(tables));
+    const workbook = xlsx.readFile(req.file.path);
     
-    if (tables.length === 0) {
-      return res.status(400).json({ error: 'The database file is empty or missing tables! Detected tables: ' + JSON.stringify(tables) });
-    }
-    const sqliteStudents = db.prepare('SELECT * FROM students').all();
-    const sqliteAttendance = db.prepare('SELECT * FROM attendance').all();
-    const sqliteFees = db.prepare('SELECT * FROM fees').all();
+    // 1. Students
+    const studentSheet = workbook.Sheets['complete BLANK'] || workbook.Sheets[Object.keys(workbook.Sheets)[0]];
+    const studentData = xlsx.utils.sheet_to_json(studentSheet);
 
-    for (const u of sqliteUsers) {
-      try { await User.create({ username: u.username, password: u.password, role: u.role }); } catch (e) {}
-    }
-    for (const s of sqliteStudents) {
-      try { await Student.create({ ...s }); } catch (e) {}
-    }
-    for (const a of sqliteAttendance) {
-      try { await Attendance.create({ ...a }); } catch (e) {}
-    }
-    for (const f of sqliteFees) {
-      try { await Fees.create({ ...f }); } catch (e) {}
+    for (const row of studentData) {
+      const roll_no = row['Roll No.'] || row['Roll No'];
+      if (!roll_no) continue;
+
+      await Student.updateOne({ roll_no }, { 
+        name: row['Name'], father_name: row["Father's Name"], mother_name: row["Mother's Name"],
+        mobile: row['Mobile No.'], reg_no: row['Regd. No'], dob: row['Date of Birth'],
+        gender: row['Gender (M/F)'], category: row['Caste'], religion: row['Religian']
+      }, { upsert: true });
+
+      await User.updateOne({ username: roll_no }, { password: 'student123', role: 'student' }, { upsert: true });
+      await Fees.updateOne({ roll_no }, { sem1: row['1st'], sem2: row['2nd'], sem3: row['3rd'], sem4: row['4th'], category: row['Caste'] }, { upsert: true });
     }
 
-    res.json({ message: `Success! Migrated ${sqliteStudents.length} students to MongoDB.` });
+    // 2. Attendance
+    const shortageSheet = workbook.Sheets['Shortage'];
+    if (shortageSheet) {
+      const attData = xlsx.utils.sheet_to_json(shortageSheet, { range: 2 });
+      for (const row of attData) {
+        const roll_no = row['Roll No.'];
+        if (!roll_no) continue;
+        await Attendance.updateOne({ roll_no }, { 
+          total_lectures: 503, 
+          attended_lectures: row['Lecture Attended '] === 'NSO' ? 0 : row['Lecture Attended '],
+          percentage: row['%age'] === 'NSO' ? 0 : row['%age']
+        }, { upsert: true });
+      }
+    }
+
+    res.send('<h1>✅ Success!</h1><p>Data imported. You can now close this and go to your Vercel site.</p><a href="/setup-portal">Go Back</a>');
   } catch (err) {
-    console.error('Migration Error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).send('<h1>❌ Error</h1><p>' + err.message + '</p>');
   }
 });
 
