@@ -71,6 +71,7 @@ const initDb = async () => {
 const User = {
   findOne: (query) => UserModel.findOne(query).lean(),
   create: (data) => UserModel.create(data),
+  updateOne: (query, updates, options) => UserModel.updateOne(query, updates, options),
   deleteOne: (query) => UserModel.deleteOne(query),
 };
 
@@ -79,7 +80,7 @@ const Student = {
   findOne: (query) => StudentModel.findOne(query).lean(),
   countDocuments: () => StudentModel.countDocuments(),
   create: (data) => StudentModel.create(data),
-  updateOne: (query, updates) => StudentModel.updateOne(query, { $set: updates }),
+  updateOne: (query, updates, options) => StudentModel.updateOne(query, updates, options),
   deleteOne: (query) => StudentModel.deleteOne(query),
   aggregate: (pipeline) => StudentModel.aggregate(pipeline),
 };
@@ -88,12 +89,14 @@ const Attendance = {
   find: () => AttendanceModel.find().lean(),
   findOne: (query) => AttendanceModel.findOne(query).lean(),
   create: (data) => AttendanceModel.create(data),
+  updateOne: (query, updates, options) => AttendanceModel.updateOne(query, updates, options),
   deleteOne: (query) => AttendanceModel.deleteOne(query),
 };
 
 const Fees = {
   findOne: (query) => FeesModel.findOne(query).lean(),
   create: (data) => FeesModel.create(data),
+  updateOne: (query, updates, options) => FeesModel.updateOne(query, updates, options),
   deleteOne: (query) => FeesModel.deleteOne(query),
 };
 
