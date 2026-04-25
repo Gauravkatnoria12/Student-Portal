@@ -41,7 +41,8 @@ app.get('/api/final-migrate', async (req, res) => {
     await Fees.deleteMany({});
     
     // 2. IMPORT REAL DATA
-    const filePath = path.join(__dirname, 'complete batch 2024 3rd sem.xls');
+    const filePath = path.resolve(__dirname, 'data.xls');
+    console.log('Attempting to read file at:', filePath);
     const workbook = xlsx.readFile(filePath);
     
     // Students
