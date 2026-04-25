@@ -1,0 +1,33 @@
+# fly.toml — Fly.io deployment config for Student Portal backend
+# Docs: https://fly.io/docs/reference/configuration/
+
+app = "student-portal-api"
+primary_region = "sin"  # Change: bom=Mumbai, sin=Singapore, lax=LA, iad=Virginia
+
+[build]
+  # Uses the Dockerfile in this directory
+
+[env]
+  NODE_ENV = "production"
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 100
+    soft_limit = 80
+
+# Persistent volume to store the SQLite database file
+[[mounts]]
+  source = "student_portal_data"
+  destination = "/data"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

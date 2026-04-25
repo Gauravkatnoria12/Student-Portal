@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: student-portal-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false   # You will paste this in the Render dashboard
+      - key: FRONTEND_URL
+        sync: false   # You will paste the Vercel URL here after deploying frontend
