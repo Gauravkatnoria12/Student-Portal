@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { User, Student, Attendance, Fees, initDb } = require('./database');
 require('dotenv').config();
 
