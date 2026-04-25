@@ -134,6 +134,14 @@ const Layout = ({ children, user, handleLogout }) => {
 
   return (
     <div className="min-h-screen bg-[#f1f5f9] flex font-sans selection:bg-[#6a42c2]/10">
+      {/* Sidebar Overlay (Mobile Only) */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-30 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        ></div>
+      )}
+
       {/* Sidebar */}
       <aside className={`bg-gradient-to-b from-[#6a42c2] to-[#4c1d95] text-white w-72 fixed inset-y-0 left-0 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-all duration-500 ease-in-out z-40 shadow-[20px_0_60px_rgba(76,29,149,0.1)]`}>
         <div className="p-8">
@@ -151,19 +159,19 @@ const Layout = ({ children, user, handleLogout }) => {
         <nav className="mt-8 px-6 space-y-3">
           {user.role === 'admin' ? (
             <>
-              <Link to="/admin" className="flex items-center gap-4 p-4 rounded-[1.5rem] hover:bg-white/10 transition-all font-bold group relative overflow-hidden">
+              <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-[1.5rem] hover:bg-white/10 transition-all font-bold group relative overflow-hidden">
                 <div className="absolute inset-y-0 left-0 w-1 bg-white opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <LayoutDashboard size={20} className="text-white/60 group-hover:text-white group-hover:scale-110 transition-transform" /> 
                 <span className="tracking-wide">Overview</span>
               </Link>
-              <Link to="/admin/students" className="flex items-center gap-4 p-4 rounded-[1.5rem] hover:bg-white/10 transition-all font-bold group relative overflow-hidden">
+              <Link to="/admin/students" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-[1.5rem] hover:bg-white/10 transition-all font-bold group relative overflow-hidden">
                 <div className="absolute inset-y-0 left-0 w-1 bg-white opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <Users size={20} className="text-white/60 group-hover:text-white group-hover:scale-110 transition-transform" /> 
                 <span className="tracking-wide">Student Directory</span>
               </Link>
             </>
           ) : (
-            <Link to={`/student/${user.username.replace(/\//g, '-')}`} className="flex items-center gap-4 p-4 rounded-[1.5rem] hover:bg-white/10 transition-all font-bold group relative overflow-hidden">
+            <Link to={`/student/${user.username.replace(/\//g, '-')}`} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-[1.5rem] hover:bg-white/10 transition-all font-bold group relative overflow-hidden">
               <div className="absolute inset-y-0 left-0 w-1 bg-white opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <User size={20} className="text-white/60 group-hover:text-white group-hover:scale-110 transition-transform" /> 
               <span className="tracking-wide">My Academic Profile</span>
