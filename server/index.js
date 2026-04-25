@@ -13,17 +13,40 @@ app.use(express.json());
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
-// Emergency Admin Setup (visit this once if admin2024 doesn't work)
+// Emergency Admin Setup
 app.get('/api/setup-admin', async (req, res) => {
   try {
     const { User } = require('./database');
-    // Delete if exists to force reset
     await User.deleteOne({ username: 'admin2024' });
-    
-    // Create fresh
     await User.create({ username: 'admin2024', password: 'admin2024', role: 'admin' });
-    res.json({ message: 'Admin account RESET! Please login with: username: admin2024 | password: admin2024' });
+    res.json({ message: 'Admin account READY! Login with admin2024 / admin2024' });
   } catch (err) {
+    console.error('Setup Error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Demo Data Setup (Visit this to see the app in action!)
+app.get('/api/demo', async (req, res) => {
+  try {
+    const demoStudents = [
+      { roll_no: '701/24', name: 'Gaurav Katnoria', category: 'GEN', gender: 'Male' },
+      { roll_no: '702/24', name: 'Amit Singh', category: 'OBC', gender: 'Male' },
+      { roll_no: '703/24', name: 'Priya Sharma', category: 'GEN', gender: 'Female' }
+    ];
+
+    for (const s of demoStudents) {
+      const exists = await Student.findOne({ roll_no: s.roll_no });
+      if (!exists) {
+        await Student.create({ ...s, father_name: 'Father', mother_name: 'Mother', mobile: '1234567890' });
+        await User.create({ username: s.roll_no, password: 'student123', role: 'student' });
+        await Attendance.create({ roll_no: s.roll_no, total_lectures: 100, attended_lectures: 85, percentage: 85 });
+        await Fees.create({ roll_no: s.roll_no, sem1: 'Paid', sem2: 'Pending', sem3: 'Pending', sem4: 'Pending', category: s.category });
+      }
+    }
+    res.json({ message: 'Demo students added! Refresh your dashboard.' });
+  } catch (err) {
+    console.error('Demo Error:', err);
     res.status(500).json({ error: err.message });
   }
 });
