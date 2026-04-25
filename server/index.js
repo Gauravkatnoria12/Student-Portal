@@ -70,10 +70,17 @@ app.get('/api/final-migrate', async (req, res) => {
       for (const row of attData) {
         const roll_no = row['Roll No.'];
         if (!roll_no) continue;
+        
+        // Handle non-numeric values like "NSO", "Demise", etc.
+        const rawAttended = row['Lecture Attended '];
+        const attended = (typeof rawAttended === 'number') ? rawAttended : 0;
+        const total = 503;
+        const pct = total > 0 ? parseFloat(((attended / total) * 100).toFixed(2)) : 0;
+        
         await Attendance.updateOne({ roll_no }, { 
-          total_lectures: 503, 
-          attended_lectures: row['Lecture Attended '] === 'NSO' ? 0 : row['Lecture Attended '],
-          percentage: row['%age'] === 'NSO' ? 0 : row['%age']
+          total_lectures: total, 
+          attended_lectures: attended,
+          percentage: pct
         }, { upsert: true });
       }
     }
