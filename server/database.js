@@ -73,6 +73,7 @@ const User = {
   create: (data) => UserModel.create(data),
   updateOne: (query, updates, options) => UserModel.updateOne(query, updates, options),
   deleteOne: (query) => UserModel.deleteOne(query),
+  deleteMany: (query) => UserModel.deleteMany(query),
 };
 
 const Student = {
@@ -82,6 +83,7 @@ const Student = {
   create: (data) => StudentModel.create(data),
   updateOne: (query, updates, options) => StudentModel.updateOne(query, updates, options),
   deleteOne: (query) => StudentModel.deleteOne(query),
+  deleteMany: (query) => StudentModel.deleteMany(query),
   aggregate: (pipeline) => StudentModel.aggregate(pipeline),
 };
 
@@ -91,6 +93,7 @@ const Attendance = {
   create: (data) => AttendanceModel.create(data),
   updateOne: (query, updates, options) => AttendanceModel.updateOne(query, updates, options),
   deleteOne: (query) => AttendanceModel.deleteOne(query),
+  deleteMany: (query) => AttendanceModel.deleteMany(query),
 };
 
 const Fees = {
@@ -98,6 +101,7 @@ const Fees = {
   create: (data) => FeesModel.create(data),
   updateOne: (query, updates, options) => FeesModel.updateOne(query, updates, options),
   deleteOne: (query) => FeesModel.deleteOne(query),
+  deleteMany: (query) => FeesModel.deleteMany(query),
 };
 
 module.exports = { User, Student, Attendance, Fees, initDb };
