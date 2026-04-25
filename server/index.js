@@ -31,46 +31,37 @@ const multer = require('multer');
 const xlsx = require('xlsx');
 const upload = multer({ dest: 'uploads/' });
 
-// Simple Setup UI
-app.get('/setup-portal', (req, res) => {
-  res.send(`
-    <body style="font-family:sans-serif; padding:50px; background:#f0f2f5;">
-      <div style="max-width:500px; margin:auto; background:white; padding:30px; border-radius:20px; shadow:0 10px 20px rgba(0,0,0,0.1)">
-        <h2>🚀 Student Portal Setup</h2>
-        <p>Select your Excel file to import all data:</p>
-        <form action="/api/upload-excel" method="post" enctype="multipart/form-data">
-          <input type="file" name="excelFile" accept=".xls,.xlsx" required style="margin-bottom:20px">
-          <br>
-          <button type="submit" style="background:#6a42c2; color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer">Upload & Import</button>
-        </form>
-      </div>
-    </body>
-  `);
-});
-
-app.post('/api/upload-excel', upload.single('excelFile'), async (req, res) => {
+app.get('/api/final-migrate', async (req, res) => {
   try {
-    const workbook = xlsx.readFile(req.file.path);
+    // 1. CLEAR OLD DATA
+    await User.deleteMany({ role: 'student' });
+    await Student.deleteMany({});
+    await Attendance.deleteMany({});
+    await Fees.deleteMany({});
     
-    // 1. Students
-    const studentSheet = workbook.Sheets['complete BLANK'] || workbook.Sheets[Object.keys(workbook.Sheets)[0]];
+    // 2. IMPORT REAL DATA
+    const filePath = path.join(__dirname, 'complete batch 2024 3rd sem.xls');
+    const workbook = xlsx.readFile(filePath);
+    
+    // Students
+    const studentSheet = workbook.Sheets['complete BLANK'];
     const studentData = xlsx.utils.sheet_to_json(studentSheet);
 
     for (const row of studentData) {
-      const roll_no = row['Roll No.'] || row['Roll No'];
+      const roll_no = row['Roll No.'];
       if (!roll_no) continue;
 
       await Student.updateOne({ roll_no }, { 
         name: row['Name'], father_name: row["Father's Name"], mother_name: row["Mother's Name"],
         mobile: row['Mobile No.'], reg_no: row['Regd. No'], dob: row['Date of Birth'],
-        gender: row['Gender (M/F)'], category: row['Caste'], religion: row['Religian']
+        gender: row['Gender (M/F)'], category: row['Caste']
       }, { upsert: true });
 
       await User.updateOne({ username: roll_no }, { password: 'student123', role: 'student' }, { upsert: true });
-      await Fees.updateOne({ roll_no }, { sem1: row['1st'], sem2: row['2nd'], sem3: row['3rd'], sem4: row['4th'], category: row['Caste'] }, { upsert: true });
+      await Fees.updateOne({ roll_no }, { sem1: 'Pending', sem2: 'Pending', sem3: 'Pending', sem4: 'Pending', category: row['Caste'] }, { upsert: true });
     }
 
-    // 2. Attendance
+    // Attendance
     const shortageSheet = workbook.Sheets['Shortage'];
     if (shortageSheet) {
       const attData = xlsx.utils.sheet_to_json(shortageSheet, { range: 2 });
@@ -85,9 +76,9 @@ app.post('/api/upload-excel', upload.single('excelFile'), async (req, res) => {
       }
     }
 
-    res.send('<h1>✅ Success!</h1><p>Data imported. You can now close this and go to your Vercel site.</p><a href="/setup-portal">Go Back</a>');
+    res.json({ message: '✅ SUCCESS! Old data removed. Real data imported.', count: studentData.length });
   } catch (err) {
-    res.status(500).send('<h1>❌ Error</h1><p>' + err.message + '</p>');
+    res.status(500).json({ error: err.message });
   }
 });
 
