@@ -10,6 +10,22 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Health check
+app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+
+// Emergency Admin Setup
+app.get('/api/setup-admin', async (req, res) => {
+  try {
+    const { User } = require('./database');
+    await User.deleteOne({ username: 'admin2024' });
+    await User.create({ username: 'admin2024', password: 'admin2024', role: 'admin' });
+    res.json({ message: 'Admin account READY! Login with admin2024 / admin2024' });
+  } catch (err) {
+    console.error('Setup Error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // --- Excel Upload Setup ---
 const multer = require('multer');
 const xlsx = require('xlsx');
