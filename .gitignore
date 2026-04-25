@@ -16,14 +16,6 @@ logs/
 *.log
 npm-debug.log*
 
-# Database files
-*.sqlite
-*.sqlite3
-
-# OS files
-.DS_Store
-Thumbs.db
-
 # Editor
 .vscode/
 .idea/

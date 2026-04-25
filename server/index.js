@@ -26,6 +26,40 @@ app.get('/api/setup-admin', async (req, res) => {
   }
 });
 
+// Migration from SQLite (One-time use)
+app.get('/api/migrate-data', async (req, res) => {
+  try {
+    const Database = require('better-sqlite3');
+    const path = require('path');
+    const sqlitePath = path.join(__dirname, 'database.sqlite');
+    const db = new Database(sqlitePath);
+
+    console.log('📖 Starting Migration on Render...');
+    const sqliteUsers = db.prepare('SELECT * FROM users').all();
+    const sqliteStudents = db.prepare('SELECT * FROM students').all();
+    const sqliteAttendance = db.prepare('SELECT * FROM attendance').all();
+    const sqliteFees = db.prepare('SELECT * FROM fees').all();
+
+    for (const u of sqliteUsers) {
+      try { await User.create({ username: u.username, password: u.password, role: u.role }); } catch (e) {}
+    }
+    for (const s of sqliteStudents) {
+      try { await Student.create({ ...s }); } catch (e) {}
+    }
+    for (const a of sqliteAttendance) {
+      try { await Attendance.create({ ...a }); } catch (e) {}
+    }
+    for (const f of sqliteFees) {
+      try { await Fees.create({ ...f }); } catch (e) {}
+    }
+
+    res.json({ message: `Success! Migrated ${sqliteStudents.length} students to MongoDB.` });
+  } catch (err) {
+    console.error('Migration Error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Demo Data Setup (Visit this to see the app in action!)
 app.get('/api/demo', async (req, res) => {
   try {
