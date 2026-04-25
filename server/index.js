@@ -35,7 +35,12 @@ app.get('/api/migrate-data', async (req, res) => {
     const db = new Database(sqlitePath);
 
     console.log('📖 Starting Migration on Render...');
-    const sqliteUsers = db.prepare('SELECT * FROM users').all();
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
+    console.log('Detected Tables:', JSON.stringify(tables));
+    
+    if (tables.length === 0) {
+      return res.status(400).json({ error: 'The database file is empty or missing tables! Detected tables: ' + JSON.stringify(tables) });
+    }
     const sqliteStudents = db.prepare('SELECT * FROM students').all();
     const sqliteAttendance = db.prepare('SELECT * FROM attendance').all();
     const sqliteFees = db.prepare('SELECT * FROM fees').all();
