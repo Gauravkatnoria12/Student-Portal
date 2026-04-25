@@ -20,6 +20,20 @@ app.use(express.json());
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
+// Emergency Admin Setup (visit this once if admin2024 doesn't work)
+app.get('/api/setup-admin', async (req, res) => {
+  try {
+    const { User } = require('./database');
+    const existing = await User.findOne({ username: 'admin2024' });
+    if (existing) return res.json({ message: 'Admin already exists!' });
+    
+    await User.create({ username: 'admin2024', password: 'admin2024', role: 'admin' });
+    res.json({ message: 'Admin created successfully! You can now log in with admin2024 / admin2024' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Login ────────────────────────────────────────────────────────────────────
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
