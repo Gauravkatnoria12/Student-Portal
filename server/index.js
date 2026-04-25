@@ -17,11 +17,12 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 app.get('/api/setup-admin', async (req, res) => {
   try {
     const { User } = require('./database');
-    const existing = await User.findOne({ username: 'admin2024' });
-    if (existing) return res.json({ message: 'Admin already exists!' });
+    // Delete if exists to force reset
+    await User.deleteOne({ username: 'admin2024' });
     
-    await User.create({ username: 'admin2024', password: 'admin2024', role: 'admin' });
-    res.json({ message: 'Admin created successfully! You can now log in with admin2024 / admin2024' });
+    // Create fresh
+    await User.create({ username: 'admin2024', password: 'admin123', role: 'admin' });
+    res.json({ message: 'Admin account RESET! Please login with: username: admin2024 | password: admin123' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
